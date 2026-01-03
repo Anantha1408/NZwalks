@@ -26,9 +26,26 @@ namespace NZWalks.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAsync([FromQuery] string? sortBy, [FromQuery] bool isAscending = true)
+        public async Task<IActionResult> GetAllAsync([FromQuery] string? sortBy, [FromQuery] bool isAscending = true,
+           [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var regions = await regionRepository.GetAllAsync(sortBy, isAscending);
+            // Validate pagination parameters
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100; // Max page size limit
+
+            // Call repository to get all regions with pagination
+            var (regions, totalCount) = await regionRepository.GetAllAsync(sortBy, isAscending, pageNumber, pageSize);
+
+            // Calculate total pages
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            // Add pagination metadata to response headers
+            Response.Headers["X-Total-Count"] = totalCount.ToString();
+            Response.Headers["X-Page-Number"] = pageNumber.ToString();
+            Response.Headers["X-Page-Size"] = pageSize.ToString();
+            Response.Headers["X-Total-Pages"] = totalPages.ToString();
+
             // Using AutoMapper to map the list of regions to a list of RegionDto
             return Ok(mapper.Map<List<RegionDto>>(regions));
         }

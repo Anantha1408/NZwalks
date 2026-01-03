@@ -32,7 +32,7 @@ namespace NZWalks.API.Repositories
 
         }
 
-        public async Task<List<Walk>> GetAllAsync(string? filterOn = null, string? filterQuery = null, string? sortBy = null, bool isAscending = true)
+        public async Task<(List<Walk> walks, int totalCount)> GetAllAsync(string? filterOn = null, string? filterQuery = null, string? sortBy = null, bool isAscending = true, int pageNumber = 1, int pageSize = 10)
         {
             var walks = dbContext.Walks.Include("Difficulty").Include("Region").AsQueryable();
 
@@ -62,7 +62,14 @@ namespace NZWalks.API.Repositories
                 }
             }
 
-            return await walks.ToListAsync();
+            // Get total count before pagination
+            var totalCount = await walks.CountAsync();
+
+            // Pagination
+            var skipResults = (pageNumber - 1) * pageSize;
+            var paginatedWalks = await walks.Skip(skipResults).Take(pageSize).ToListAsync();
+
+            return (paginatedWalks, totalCount);
             //return await dbContext.Walks.Include("Difficulty").Include("Region").ToListAsync();
 
 

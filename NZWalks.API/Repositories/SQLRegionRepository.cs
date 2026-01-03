@@ -12,7 +12,7 @@ namespace NZWalks.API.Repositories
         {
             this.dbContext = dbContext;
         }
-        public async Task<List<Region>> GetAllAsync(string? sortBy = null, bool isAscending = true)
+        public async Task<(List<Region> regions, int totalCount)> GetAllAsync(string? sortBy = null, bool isAscending = true, int pageNumber = 1, int pageSize = 10)
         {
             var regions = dbContext.Regions.AsQueryable();
 
@@ -29,7 +29,14 @@ namespace NZWalks.API.Repositories
                 }
             }
 
-            return await regions.ToListAsync();
+            // Get total count before pagination
+            var totalCount = await regions.CountAsync();
+
+            // Pagination
+            var skipResults = (pageNumber - 1) * pageSize;
+            var paginatedRegions = await regions.Skip(skipResults).Take(pageSize).ToListAsync();
+
+            return (paginatedRegions, totalCount);
 
         }
 

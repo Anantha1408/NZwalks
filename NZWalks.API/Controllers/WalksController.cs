@@ -44,12 +44,28 @@ namespace NZWalks.API.Controllers
         // Get all walks
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] string? filterOn, [FromQuery] string? filterQuery,
-            [FromQuery] string? sortBy, [FromQuery] bool isAscending = true)
+            [FromQuery] string? sortBy, [FromQuery] bool isAscending = true,
+            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            // Call repository to get all walks
-            var walksDomainModel = await walkRepository.GetAllAsync(filterOn, filterQuery, sortBy, isAscending);
+            // Validate pagination parameters
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100; // Max page size limit
+
+            // Call repository to get all walks with pagination
+            var (walks, totalCount) = await walkRepository.GetAllAsync(filterOn, filterQuery, sortBy, isAscending, pageNumber, pageSize);
+
+            // Calculate total pages
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            // Add pagination metadata to response headers
+            Response.Headers["X-Total-Count"] = totalCount.ToString();
+            Response.Headers["X-Page-Number"] = pageNumber.ToString();
+            Response.Headers["X-Page-Size"] = pageSize.ToString();
+            Response.Headers["X-Total-Pages"] = totalPages.ToString();
+
             // Map Domain Model to DTO
-            var walksDto = mapper.Map<List<WalkDto>>(walksDomainModel);
+            var walksDto = mapper.Map<List<WalkDto>>(walks);
             return Ok(walksDto);
         }
 
