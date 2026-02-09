@@ -7,13 +7,39 @@ using Microsoft.IdentityModel.Tokens;
 using NZWalks.API.Data;
 using NZWalks.API.Mappings;
 using NZWalks.API.Repositories;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Serilog
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/NZWalks_log_.txt", rollingInterval: RollingInterval.Day, 
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+        retainedFileCountLimit: 30)
+    .MinimumLevel.Information()
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+// Add CORS policy for web application
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWebApp", policy =>
+    {
+        policy.AllowAnyOrigin()  // Allows requests from file:// and any localhost
+              .AllowAnyMethod()  // Allows GET, POST, PUT, DELETE, etc.
+              .AllowAnyHeader()  // Allows all headers including Authorization
+              .WithExposedHeaders("X-Total-Count", "X-Page-Number", "X-Page-Size", "X-Total-Pages");  // Expose pagination headers
+    });
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -109,7 +135,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<NZWalks.API.Middlewares.ExceptionHandlerMiddleware>();
+
 app.UseHttpsRedirection();
+
+// Enable CORS
+app.UseCors("AllowWebApp");
 
 app.UseStaticFiles(new StaticFileOptions
 {

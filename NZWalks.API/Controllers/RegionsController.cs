@@ -18,12 +18,14 @@ namespace NZWalks.API.Controllers
         private readonly NZWalksDbContext dbContext;
         private readonly IRegionRepository regionRepository;
         private readonly IMapper mapper;
+        private readonly ILogger<RegionsController> logger;
 
-        public RegionsController(NZWalksDbContext dbContext, IRegionRepository regionRepository, IMapper mapper)
+        public RegionsController(NZWalksDbContext dbContext, IRegionRepository regionRepository, IMapper mapper, ILogger<RegionsController> logger)
         {
             this.dbContext = dbContext;
             this.regionRepository = regionRepository;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         [HttpGet]
@@ -31,6 +33,9 @@ namespace NZWalks.API.Controllers
         public async Task<IActionResult> GetAllAsync([FromQuery] string? sortBy, [FromQuery] bool isAscending = true,
            [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
+            logger.LogInformation("GetAllAsync called with sortBy={SortBy}, isAscending={IsAscending}, pageNumber={PageNumber}, pageSize={PageSize}", 
+                sortBy ?? "null", isAscending, pageNumber, pageSize);
+
             // Validate pagination parameters
             if (pageNumber < 1) pageNumber = 1;
             if (pageSize < 1) pageSize = 10;
@@ -38,6 +43,8 @@ namespace NZWalks.API.Controllers
 
             // Call repository to get all regions with pagination
             var (regions, totalCount) = await regionRepository.GetAllAsync(sortBy, isAscending, pageNumber, pageSize);
+
+            logger.LogInformation("Retrieved {Count} regions out of {TotalCount} total", regions.Count, totalCount);
 
             // Calculate total pages
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -57,12 +64,17 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Reader,Writer")]
         public async Task<IActionResult> GetByIdAsync([FromRoute] Guid id)
         {
+            logger.LogInformation("GetByIdAsync called with id={Id}", id);
+
             var region = await dbContext.Regions.FirstOrDefaultAsync(x => x.Id == id);
 
             if (region == null)
             {
+                logger.LogWarning("Region with id={Id} not found", id);
                 return NotFound();
             }
+
+            logger.LogInformation("Region with id={Id} retrieved successfully", id);
 
 
             return Ok(mapper.Map<RegionDto>(region));
@@ -75,11 +87,14 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> Create([FromBody] AddRegionRequestDto addRegionRequestDto)
         {
+            logger.LogInformation("Create called with region name={Name}", addRegionRequestDto.Name);
 
             // Validate the incoming request
 
             var regionDomainModel = mapper.Map<Region>(addRegionRequestDto);
             regionDomainModel = await regionRepository.Create(regionDomainModel);
+
+            logger.LogInformation("Region created successfully with id={Id}", regionDomainModel.Id);
 
 
             var regionDto = mapper.Map<RegionDto>(regionDomainModel);
@@ -93,13 +108,17 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
         {
+            logger.LogInformation("Update called with id={Id}", id);
 
             var regionDomainModel = mapper.Map<Region>(updateRegionRequestDto);
             var region = await regionRepository.Update(id, regionDomainModel);
             if (region == null)
             {
+                logger.LogWarning("Region with id={Id} not found for update", id);
                 return NotFound();
             }
+
+            logger.LogInformation("Region with id={Id} updated successfully", id);
 
             var regionDto = mapper.Map<RegionDto>(region);
             return Ok(regionDto);
@@ -111,12 +130,17 @@ namespace NZWalks.API.Controllers
         [Authorize(Roles = "Writer")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
+            logger.LogInformation("Delete called with id={Id}", id);
+
             var region = await regionRepository.DeleteAsync(id);
 
             if (region == null)
             {
+                logger.LogWarning("Region with id={Id} not found for deletion", id);
                 return NotFound();
             }
+
+            logger.LogInformation("Region with id={Id} deleted successfully", id);
             var regionDto = mapper.Map<RegionDto>(region);
 
             return NoContent();

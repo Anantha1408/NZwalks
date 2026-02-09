@@ -12,11 +12,13 @@ namespace NZWalks.API.Controllers
     {
         private readonly UserManager<IdentityUser> userManager;
         private readonly ITokenRepository tokenRepository;
+        private readonly ILogger<AuthController> logger;
 
-        public AuthController(UserManager<IdentityUser> userManager, ITokenRepository tokenRepository)
+        public AuthController(UserManager<IdentityUser> userManager, ITokenRepository tokenRepository, ILogger<AuthController> logger)
         {
             this.userManager = userManager;
             this.tokenRepository = tokenRepository;
+            this.logger = logger;
         }
 
         // POST: /api/Auth/Register
@@ -24,6 +26,8 @@ namespace NZWalks.API.Controllers
         [Route("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
         {
+            logger.LogInformation("Registration attempt for username={Username}", registerRequestDto.Username);
+
             var identityUser = new IdentityUser
             {
                 UserName = registerRequestDto.Username,
@@ -41,24 +45,32 @@ namespace NZWalks.API.Controllers
 
                     if (identityResult.Succeeded)
                     {
+                        logger.LogInformation("User registered successfully: username={Username}, roles={Roles}", 
+                            registerRequestDto.Username, string.Join(",", registerRequestDto.Roles));
                         return Ok("User was registered! Please login.");
                     }
                     else
                     {
                         // Return specific role assignment errors
                         var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+                        logger.LogWarning("Role assignment failed for username={Username}: {Errors}", 
+                            registerRequestDto.Username, errors);
                         return BadRequest(errors);
                     }
                 }
                 else
                 {
                     // User registered successfully without roles
+                    logger.LogInformation("User registered successfully without roles: username={Username}", 
+                        registerRequestDto.Username);
                     return Ok("User was registered! Please login.");
                 }
             }
 
             // Return specific registration errors (password requirements, duplicate user, etc.)
             var registrationErrors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+            logger.LogWarning("Registration failed for username={Username}: {Errors}", 
+                registerRequestDto.Username, registrationErrors);
             return BadRequest(registrationErrors);
         }
 
@@ -67,6 +79,8 @@ namespace NZWalks.API.Controllers
         [Route("Login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
         {
+            logger.LogInformation("Login attempt for username={Username}", loginRequestDto.Username);
+
             var user = await userManager.FindByEmailAsync(loginRequestDto.Username);
 
             if (user != null)
@@ -88,11 +102,15 @@ namespace NZWalks.API.Controllers
                             JwtToken = jwtToken
                         };
 
+                        logger.LogInformation("Login successful for username={Username}, roles={Roles}", 
+                            loginRequestDto.Username, string.Join(",", roles));
+
                         return Ok(response);
                     }
                 }
             }
 
+            logger.LogWarning("Login failed for username={Username}", loginRequestDto.Username);
             return BadRequest("Username or password incorrect");
         }
     }

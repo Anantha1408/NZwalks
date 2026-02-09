@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Header Style Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Debug styles to highlight headers */
+        .view-header {
+            border: 2px solid red !important;
+            padding: 10px !important;
+            margin: 20px 0 !important;
+        }
+        .view-title {
+            background: yellow !important;
+            color: black !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Header Styling Test</h1>
+        <p>This page shows all three headers to check styling consistency</p>
+
+        <!-- Regions Header -->
+        <div class="view-header">
+            <div>
+                <h2 class="view-title">Regions</h2>
+                <p class="view-subtitle">Explore New Zealand's diverse regions</p>
+            </div>
+            <button class="btn btn-primary">+ Add Region</button>
+        </div>
+
+        <!-- Walks Header -->
+        <div class="view-header">
+            <div>
+                <h2 class="view-title">Walks</h2>
+                <p class="view-subtitle">Discover scenic walking trails</p>
+            </div>
+            <button class="btn btn-primary">+ Add Walk</button>
+        </div>
+
+        <!-- Upload Image Header -->
+        <div class="view-header">
+            <div>
+                <h2 class="view-title">Upload Image</h2>
+                <p class="view-subtitle">Share beautiful trail photos</p>
+            </div>
+        </div>
+
+        <hr>
+        <h3>CSS Variable Values</h3>
+        <p>Font Size 2XL: <code>var(--font-size-2xl) = 1.5rem</code></p>
+        <p>Font Weight Bold: <code>var(--font-weight-bold) = 700</code></p>
+
+        <h3>Computed Styles Check</h3>
+        <p>Open browser DevTools (F12) and inspect each .view-title element to check:</p>
+        <ul>
+            <li>font-size should be 1.5rem (24px)</li>
+            <li>font-weight should be 700 (bold)</li>
+            <li>All three should be identical</li>
+        </ul>
+    </div>
+</body>
+</html>

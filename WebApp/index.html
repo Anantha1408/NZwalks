@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NZWalks - Explore and manage beautiful walking trails across New Zealand">
+    <title>NZWalks - Trail Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🏔️ NZWalks</h1>
+            </div>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#" data-view="regions" class="nav-link">Regions</a></li>
+                <li><a href="#" data-view="walks" class="nav-link">Walks</a></li>
+                <li><a href="#" data-view="upload" class="nav-link writer-only">Upload Image</a></li>
+            </ul>
+            <div class="nav-auth" id="navAuth">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Login View -->
+            <div id="loginView" class="view">
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <h2 class="auth-title">Welcome to NZWalks</h2>
+                        <p class="auth-subtitle">Sign in to explore amazing trails</p>
+                        
+                        <form id="loginForm" class="auth-form">
+                            <div class="form-group">
+                                <input type="text" id="loginUsername" class="form-input" placeholder=" " required>
+                                <label for="loginUsername" class="form-label">Username / Email</label>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" id="loginPassword" class="form-input" placeholder=" " required>
+                                <label for="loginPassword" class="form-label">Password</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                Sign In
+                            </button>
+                        </form>
+
+                        <div class="auth-divider">
+                            <span>Don't have an account?</span>
+                        </div>
+
+                        <button id="showRegisterBtn" class="btn btn-secondary btn-block">
+                            Create Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register View -->
+            <div id="registerView" class="view hidden">
+                <div class="auth-container">
+                    <div class="auth-card">
+                        <h2 class="auth-title">Create Account</h2>
+                        <p class="auth-subtitle">Join NZWalks community</p>
+                        
+                        <form id="registerForm" class="auth-form">
+                            <div class="form-group">
+                                <input type="text" id="registerUsername" class="form-input" placeholder=" " required>
+                                <label for="registerUsername" class="form-label">Username / Email</label>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" id="registerPassword" class="form-input" placeholder=" " required minlength="6">
+                                <label for="registerPassword" class="form-label">Password</label>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="registerRoleWriter" value="Writer">
+                                    <span>Register as Writer (can create/edit content)</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                Create Account
+                            </button>
+                        </form>
+
+                        <div class="auth-divider">
+                            <span>Already have an account?</span>
+                        </div>
+
+                        <button id="showLoginBtn" class="btn btn-secondary btn-block">
+                            Sign In
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regions View -->
+            <div id="regionsView" class="view hidden">
+                <div class="view-header">
+                    <div>
+                        <h2 class="view-title">Regions</h2>
+                        <p class="view-subtitle">Explore New Zealand's diverse regions</p>
+                    </div>
+                    <button id="addRegionBtn" class="btn btn-primary writer-only">
+                        + Add Region
+                    </button>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <label>Sort by:</label>
+                        <select id="regionSortBy" class="form-select">
+                            <option value="Name">Name</option>
+                            <option value="Code">Code</option>
+                        </select>
+                        <button id="regionSortOrder" class="btn btn-icon" data-ascending="true" title="Ascending">
+                            ↑
+                        </button>
+                    </div>
+                </div>
+
+                <div id="regionsGrid" class="grid">
+                    <!-- Regions will be populated here -->
+                </div>
+
+                <div id="regionsPagination" class="pagination">
+                    <!-- Pagination will be populated here -->
+                </div>
+            </div>
+
+            <!-- Walks View -->
+            <div id="walksView" class="view hidden">
+                <div class="view-header">
+                    <div>
+                        <h2 class="view-title">Walks</h2>
+                        <p class="view-subtitle">Discover scenic walking trails</p>
+                    </div>
+                    <button id="addWalkBtn" class="btn btn-primary writer-only">
+                        + Add Walk
+                    </button>
+                </div>
+
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <label>Filter:</label>
+                        <select id="walkFilterOn" class="form-select">
+                            <option value="">All Walks</option>
+                            <option value="Name">By Name</option>
+                            <option value="LengthInKm">By Length</option>
+                        </select>
+                        <input type="text" id="walkFilterQuery" class="form-input" placeholder="Enter filter value...">
+                    </div>
+                    <div class="filter-group">
+                        <label>Sort by:</label>
+                        <select id="walkSortBy" class="form-select">
+                            <option value="Name">Name</option>
+                            <option value="LengthInKm">Length</option>
+                        </select>
+                        <button id="walkSortOrder" class="btn btn-icon" data-ascending="true" title="Ascending">
+                            ↑
+                        </button>
+                    </div>
+                </div>
+
+                <div id="walksGrid" class="grid">
+                    <!-- Walks will be populated here -->
+                </div>
+
+                <div id="walksPagination" class="pagination">
+                    <!-- Pagination will be populated here -->
+                </div>
+            </div>
+
+            <!-- Image Upload View -->
+            <div id="uploadView" class="view hidden">
+                <div class="view-header">
+                    <div>
+                        <h2 class="view-title">Upload Image</h2>
+                        <p class="view-subtitle">Share beautiful trail photos</p>
+                    </div>
+                </div>
+
+                <div class="upload-container">
+                    <form id="uploadForm" class="upload-form">
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="imageFile" accept=".jpg,.jpeg,.png" hidden>
+                            <div class="upload-placeholder">
+                                <div class="upload-icon">📁</div>
+                                <p>Click to select an image or drag and drop</p>
+                                <small>Supports: JPG, JPEG, PNG (max 10MB)</small>
+                            </div>
+                            <div id="imagePreview" class="image-preview hidden"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <input type="text" id="imageFileName" class="form-input" placeholder=" " required>
+                            <label for="imageFileName" class="form-label">File Name</label>
+                        </div>
+
+                        <div class="form-group">
+                            <textarea id="imageDescription" class="form-input" placeholder=" " rows="3"></textarea>
+                            <label for="imageDescription" class="form-label">Description (optional)</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Upload Image
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modalOverlay" class="modal-overlay hidden">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div id="modalContent" class="modal-content">
+                <!-- Modal content will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 NZWalks. Explore the beauty of New Zealand's trails.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/regions.js"></script>
+    <script src="js/walks.js"></script>
+    <script src="js/images.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

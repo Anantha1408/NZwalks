@@ -47,3 +47,6 @@ x86/
 project.lock.json
 project.fragment.lock.json
 artifacts/
+
+# Serilog log files
+Logs/
